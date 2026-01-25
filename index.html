@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* 1. إعدادات التصميم (UI/UX) - ملعبك المفضل */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;800&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            width: 1920px;
+            height: 1080px;
+            background-color: #111;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        #container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            width: 1600px; /* مساحة آمنة */
+        }
+
+        .word {
+            font-size: 100px;
+            font-weight: 800;
+            color: white;
+            opacity: 0; /* مخفي في البداية */
+            /* لمسات جمالية CSS */
+            text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            transform-style: preserve-3d;
+            display: inline-block;
+        }
+
+        .highlight {
+            color: #FFD700; /* ذهبي */
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        }
+    </style>
+    
+    <!-- GSAP Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+
+    <div id="container"></div>
+
+    <script>
+        // هذا المتغير سيتم استدعاؤه من Puppeteer للتحكم في الزمن
+        window.seekTo = function(time) {
+            tl.seek(time);
+        };
+
+        // بياناتك (يمكنك حقنها برمجياً أو قراءتها من ملف)
+        // لنفترض أن هذا هو محتوى timeline.json
+        const wordsData = [
+            { content: "أهلاً", start: 0, end: 0.5, type: "pop" },
+            { content: "بك", start: 0.5, end: 1.0, type: "slide" },
+            { content: "يا", start: 1.0, end: 1.2, type: "pop" },
+            { content: "مبدع", start: 1.2, end: 2.0, type: "pop", highlight: true },
+            { content: "الجافاسكريبت", start: 2.0, end: 3.5, type: "slide", highlight: true }
+        ];
+
+        const container = document.getElementById('container');
+        
+        // 1. بناء العناصر (DOM Generation)
+        wordsData.forEach((w, i) => {
+            const span = document.createElement('span');
+            span.textContent = w.content;
+            span.className = `word ${w.highlight ? 'highlight' : ''}`;
+            span.id = `word-${i}`;
+            container.appendChild(span);
+        });
+
+        // 2. بناء الأنيمشن (GSAP Timeline)
+        const tl = gsap.timeline({ paused: true }); // متوقف لننحكم به يدوياً
+
+        wordsData.forEach((w, i) => {
+            const element = document.getElementById(`word-${i}`);
+            
+            // اختيار نوع الحركة بناء على البيانات
+            if (w.type === 'pop') {
+                tl.fromTo(element, 
+                    { scale: 0, opacity: 0 },
+                    { 
+                        scale: 1, 
+                        opacity: 1, 
+                        duration: 0.4, 
+                        ease: "back.out(1.7)" // فيزياء الارتداد
+                    }, 
+                    w.start // وقت البداية بالضبط
+                );
+            } else if (w.type === 'slide') {
+                tl.fromTo(element, 
+                    { y: 100, opacity: 0 },
+                    { 
+                        y: 0, 
+                        opacity: 1, 
+                        duration: 0.5, 
+                        ease: "power2.out" 
+                    }, 
+                    w.start
+                );
+            }
+            
+            // اختفاء الكلمة (اختياري حسب الرغبة)
+            // tl.to(element, { opacity: 0.2, duration: 0.2 }, w.end);
+        });
+
+        // جاهزية الصفحة
+        window.animationReady = true;
+    </script>
+</body>
+</html>
