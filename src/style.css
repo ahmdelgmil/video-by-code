@@ -1,0 +1,84 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+
+body {
+    margin: 0; padding: 0;
+    width: 1920px; height: 1080px;
+    background-color: #050505; /* لون خلفية داكن جداً */
+    font-family: 'Cairo', sans-serif;
+    overflow: hidden;
+}
+
+/* طبقة العالم (لتحريك الكاميرا) */
+#world {
+    position: absolute;
+    width: 1920px; height: 1080px;
+    transform-origin: 0 0; /* مهم للزووم */
+}
+
+/* الخلفية الشبكية (Grid) مثل الفيديو */
+.grid-bg {
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 100px 100px;
+    z-index: 0;
+}
+
+/* النصوص */
+.text-element {
+    position: absolute;
+    color: white;
+    font-weight: 900;
+    text-align: center;
+    line-height: 1.2;
+    text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    display: flex; flex-wrap: wrap; justify-content: center;
+    direction: rtl;
+    transform: translate(-50%, -50%); /* للتوسيط */
+    z-index: 100;
+}
+
+.highlight { color: #FFD700; } /* أصفر ذهبي */
+.highlight-2 { color: #00FFFF; } /* سماوي */
+
+/* محاكاة نوافذ لينكس (Mockup UI) */
+.linux-window {
+    position: absolute;
+    background: #1e1e1e;
+    border-radius: 15px;
+    border: 1px solid #333;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+    transform: translate(-50%, -50%);
+    display: flex; flex-direction: column;
+}
+
+.window-header {
+    height: 40px;
+    background: #2d2d2d;
+    display: flex; align-items: center;
+    padding: 0 15px;
+    border-bottom: 1px solid #333;
+}
+
+.window-dots span {
+    display: inline-block; width: 12px; height: 12px;
+    border-radius: 50%; margin-right: 8px;
+}
+.dot-red { background: #ff5f56; }
+.dot-yellow { background: #ffbd2e; }
+.dot-green { background: #27c93f; }
+
+.window-body {
+    flex: 1; padding: 20px; color: #ddd; font-family: monospace; font-size: 24px;
+}
+
+/* التيرمينال */
+.terminal-text { color: #00ff00; }
+.cursor { display: inline-block; width: 10px; height: 25px; background: #00ff00; animation: blink 1s infinite; }
+
+@keyframes blink { 50% { opacity: 0; } }

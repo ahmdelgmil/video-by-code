@@ -1,1 +1,4 @@
 node_modules
+output
+frames_gsap
+temp_frames

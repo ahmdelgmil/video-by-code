@@ -1,0 +1,88 @@
+{
+  "settings": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "duration": 20,
+    "background": "#111"
+  },
+  "layers": [
+    {
+      "id": "screen-recording-main",
+      "type": "video",
+      "src": "assets/screen_record_full.mp4",
+      "style": { "width": "1920px", "height": "1080px", "zIndex": 1 },
+      "x": 960, "y": 540,
+      "start": 0,
+      "animations": [
+        { "effect": "fadeIn", "start": 0, "duration": 0.5 }
+      ]
+    },
+    {
+      "id": "text-word-1",
+      "type": "text",
+      "content": "غامرت",
+      "style": { "fontSize": "150px", "color": "#fff", "fontFamily": "Cairo", "fontWeight": "900", "zIndex": 10 },
+      "x": 960, "y": 540,
+      "animations": [
+        { "effect": "kineticStomp", "start": 0, "duration": 0.4 },
+        { "effect": "fadeOut", "start": 0.8, "duration": 0.1 }
+      ]
+    },
+    {
+      "id": "text-word-2",
+      "type": "text",
+      "content": "في النظام",
+      "style": { "fontSize": "150px", "color": "#fff", "fontFamily": "Cairo", "fontWeight": "900", "zIndex": 10 },
+      "x": 960, "y": 540,
+      "animations": [
+        { "effect": "kineticStomp", "start": 0.9, "duration": 0.4 },
+        { "effect": "fadeOut", "start": 1.5, "duration": 0.1 }
+      ]
+    },
+    {
+      "id": "camera-controller-1",
+      "type": "dummy", 
+      "x": 300, "y": 400,
+      "animations": [
+        { 
+            "effect": "cameraFocus", 
+            "zoomLevel": 2.5,
+            "start": 5, 
+            "duration": 1.5 
+        }
+      ]
+    },
+    {
+      "id": "camera-reset",
+      "type": "dummy",
+      "x": 960, "y": 540,
+      "animations": [
+        { 
+            "effect": "cameraFocus", 
+            "zoomLevel": 1, 
+            "start": 8, 
+            "duration": 1 
+        }
+      ]
+    },
+    {
+        "id": "progress-bar-container",
+        "type": "box",
+        "isFixed": true,
+        "style": { "width": "1800px", "height": "10px", "background": "#333", "borderRadius": "5px" },
+        "x": 960, "y": 1000
+    },
+    {
+        "id": "progress-fill",
+        "type": "box",
+        "isFixed": true,
+        "style": { "width": "0px", "height": "10px", "background": "#FFD700", "borderRadius": "5px" },
+        "x": 60, "y": 1000,
+        "styleOverride": { "transform": "translate(0, -50%)" },
+        "animations": [
+            { "effect": "widthGrow", "targetWidth": "1800px", "start": 0, "duration": 20 }
+        ]
+    }
+  ]
+}

@@ -3,73 +3,78 @@ const { execSync } = require('child_process');
 const fs = require('fs-extra');
 const path = require('path');
 
-// إعدادات الفيديو
+// تحميل الإعدادات
+const timelineData = fs.readJsonSync('timeline.json');
 const CONFIG = {
-    fps: 30,
-    duration: 5, // مدة الفيديو بالثواني (يمكن حسابها ديناميكياً)
-    width: 1920,
-    height: 1080,
-    outputDir: 'frames_gsap',
-    finalVideo: 'output_gsap.mp4',
-    audioFile: 'input_video.wav' // ملف الصوت الأصلي
+    ...timelineData.settings,
+    outputDir: path.join(__dirname, 'temp_frames'),
+    outputVideo: path.join(__dirname, 'output', 'final_video.mp4')
 };
 
 async function render() {
-    console.log("🚀 تشغيل المتصفح...");
+    console.log(`🎬 بدء المشروع: ${CONFIG.width}x${CONFIG.height} @ ${CONFIG.fps}fps`);
     
-    // إعداد المجلدات
+    // تنظيف
     fs.emptyDirSync(CONFIG.outputDir);
+    fs.ensureDirSync(path.dirname(CONFIG.outputVideo));
 
-    const browser = await puppeteer.launch({
+    const browser = await puppeteer.launch({ 
         headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox'] // لتخفيف الحمل
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
-    
     const page = await browser.newPage();
-    await page.setViewport({ width: CONFIG.width, height: CONFIG.height });
+    
+    // ضبط حجم الشاشة بدقة
+    await page.setViewport({ width: CONFIG.width, height: CONFIG.height, deviceScaleFactor: 1 });
 
-    // فتح ملف HTML المحلي
-    const htmlPath = `file://${path.join(__dirname, 'scene.html')}`;
-    await page.goto(htmlPath, { waitUntil: 'networkidle0' });
+    // تحميل ملف HTML
+    const htmlUrl = `file://${path.join(__dirname, 'src', 'template.html')}`;
+    await page.goto(htmlUrl, { waitUntil: 'networkidle0' });
 
-    console.log("🎨 بدء عملية الرندر (إطار بإطار)...");
+    // حقن البيانات وتشغيل المحرك
+    await page.evaluate((data) => {
+        window.initEngine(data);
+    }, timelineData);
+
+    console.log("📸 جاري التقاط الإطارات...");
 
     const totalFrames = Math.ceil(CONFIG.duration * CONFIG.fps);
 
     for (let i = 0; i < totalFrames; i++) {
-        const currentTime = i / CONFIG.fps;
+        const time = i / CONFIG.fps;
+        
+        // تحريك الزمن في المتصفح
+        await page.evaluate((t) => { window.seekTo(t); }, time);
 
-        // 1. تحريك الزمن داخل المتصفح لنقطة محددة
-        await page.evaluate((time) => {
-            if (window.seekTo) window.seekTo(time);
-        }, currentTime);
-
-        // 2. التقاط الصورة
-        const fileName = `frame_${String(i).padStart(5, '0')}.png`;
-        await page.screenshot({ 
-            path: path.join(CONFIG.outputDir, fileName),
-            type: 'png',
-            omitBackground: false 
+        // التقاط الصورة
+        const frameNum = String(i).padStart(5, '0');
+        await page.screenshot({
+            path: path.join(CONFIG.outputDir, `frame_${frameNum}.png`),
+            type: 'png'
         });
 
-        // شريط تقدم بسيط
-        process.stdout.write(`\r📸 تم التقاط: ${i + 1}/${totalFrames}`);
+        // طباعة التقدم
+        const progress = Math.round((i / totalFrames) * 100);
+        process.stdout.write(`\r[${progress}%] Time: ${time.toFixed(2)}s`);
     }
 
     await browser.close();
-    console.log("\n🎬 تجميع الفيديو باستخدام FFmpeg...");
+    console.log("\n🎞️ جاري التجميع بـ FFmpeg...");
 
-    // تجميع الفيديو مع الصوت
-    // -hwaccel auto: يحاول استخدام كارت الشاشة إن وجد لتسريع العمل
-    const ffmpegCmd = `ffmpeg -y -framerate ${CONFIG.fps} -i "${CONFIG.outputDir}/frame_%05d.png" -i "${CONFIG.audioFile}" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "${CONFIG.finalVideo}"`;
-    
+    // أمر FFmpeg (يدعم الصوت إذا كان موجوداً)
+    let cmd = `ffmpeg -y -framerate ${CONFIG.fps} -i "${CONFIG.outputDir}/frame_%05d.png" `;
+    if (fs.existsSync(CONFIG.audio)) {
+        cmd += `-i "${CONFIG.audio}" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "${CONFIG.outputVideo}"`;
+    } else {
+        cmd += `-c:v libx264 -pix_fmt yuv420p "${CONFIG.outputVideo}"`;
+    }
+
     try {
-        execSync(ffmpegCmd, { stdio: 'inherit' });
-        console.log(`✅ تم إنشاء الفيديو: ${CONFIG.finalVideo}`);
-        // تنظيف الصور (اختياري)
-        // fs.removeSync(CONFIG.outputDir);
+        execSync(cmd, { stdio: 'inherit' });
+        console.log(`\n✅ تم بنجاح! الفيديو موجود في: ${CONFIG.outputVideo}`);
+        // fs.removeSync(CONFIG.outputDir); // حذف الصور المؤقتة
     } catch (e) {
-        console.error("❌ خطأ في FFmpeg:", e);
+        console.error("❌ حدث خطأ أثناء التجميع:", e.message);
     }
 }
 

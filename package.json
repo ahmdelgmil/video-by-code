@@ -1,11 +1,9 @@
 {
-  "name": "video-by-code",
+  "name": "linux-video-pro",
   "version": "1.0.0",
-  "main": "render.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "dependencies": {
+    "puppeteer": "^21.0.0",
+    "fs-extra": "^11.0.0",
+    "gsap": "^3.12.0"
+  }
 }
