@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { margin: 0; padding: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
+        #canvas { width: 1920px; height: 1080px; position: relative; overflow: hidden; }
+        .layer { position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .shape { position: absolute; background-color: rgba(255, 255, 255, var(--op)); }
+        svg { position: absolute; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+    <div id="canvas"></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        let tl = gsap.timeline({ paused: true });
+
+        window.seekTo = (t) => tl.seek(t);
+
+        window.init = (task, settings) => {
+            canvas.innerHTML = '';
+            tl.kill();
+            tl = gsap.timeline({ paused: true });
+            
+            canvas.style.backgroundColor = task.color;
+            document.documentElement.style.setProperty('--op', task.op);
+            const dur = settings.duration;
+
+            // استدعاء التأثير بناءً على النوع
+            const effects = {
+                squares: effectSquares, grid: effectGrid, waves: effectWaves,
+                dots: effectDots, plus: effectPlus, rings: effectRings,
+                diagonal: effectDiagonal, hex: effectHex, triangles: effectTriangles,
+                stripes: effectStripes
+            };
+            if(effects[task.type]) effects[task.type](dur, task.accent);
+        };
+
+        // --- التأثيرات الاحترافية ---
+
+        function effectSquares(dur) {
+            const size = 120;
+            const gap = 40;
+            for(let i = -2; i < 15; i++) {
+                for(let j = -2; j < 10; j++) {
+                    const s = document.createElement('div');
+                    s.className = 'shape';
+                    s.style.width = s.style.height = size + 'px';
+                    s.style.left = (i * (size + gap)) + 'px';
+                    s.style.top = (j * (size + gap)) + 'px';
+                    canvas.appendChild(s);
+                    
+                    // انيميشن مركب: دوران + تكبير + إزاحة
+                    tl.fromTo(s, 
+                        { rotation: 0, scale: 0.8, borderRadius: "20%" },
+                        { rotation: 90, scale: 1.1, borderRadius: "0%", duration: dur/2, yoyo: true, repeat: 1, ease: "expo.inOut" }, 0
+                    );
+                    tl.to(s, { x: size + gap, y: size + gap, duration: dur, ease: "none" }, 0);
+                }
+            }
+        }
+
+        function effectGrid(dur, accent) {
+            const grid = document.createElement('div');
+            grid.style.width = "250%"; grid.style.height = "250%";
+            grid.style.backgroundImage = `linear-gradient(${accent}1a 2px, transparent 2px), linear-gradient(90deg, ${accent}1a 2px, transparent 2px)`;
+            grid.style.backgroundSize = "100px 100px";
+            grid.style.transform = "rotateX(60deg) translateY(-200px)";
+            canvas.appendChild(grid);
+            tl.to(grid, { backgroundPosition: "0 100px", duration: dur, ease: "none" }, 0);
+        }
+
+        function effectWaves(dur) {
+            for(let i=0; i<8; i++) {
+                const w = document.createElement('div');
+                w.className = 'shape';
+                w.style.width = '2500px'; w.style.height = '2500px';
+                w.style.borderRadius = '38% 42% 40% 45%';
+                w.style.top = (500 + i*40) + 'px';
+                w.style.left = '-300px';
+                w.style.opacity = (1 - i*0.1);
+                canvas.appendChild(w);
+                tl.to(w, { rotation: 360, duration: dur, ease: "none" }, 0);
+                tl.to(w, { scale: 1.1, yoyo: true, repeat: 1, duration: dur/2 }, 0);
+            }
+        }
+
+        function effectDots(dur) {
+            const gap = 120;
+            for(let x=0; x<2100; x+=gap) {
+                for(let y=0; y<1200; y+=gap) {
+                    const d = document.createElement('div');
+                    d.className = 'shape';
+                    d.style.width = d.style.height = '15px';
+                    d.style.borderRadius = '50%';
+                    d.style.left = x+'px'; d.style.top = y+'px';
+                    canvas.appendChild(d);
+                    tl.fromTo(d, { scale: 0 }, { scale: 2, duration: dur/2, yoyo: true, repeat: 1, ease: "elastic.out(1, 0.3)" }, (x+y)*0.0004);
+                }
+            }
+        }
+
+        function effectPlus(dur) {
+            for(let i=0; i<60; i++) {
+                const p = document.createElement('div');
+                p.innerHTML = '+'; p.className = 'shape';
+                p.style.background = 'none'; p.style.fontSize = '60px';
+                p.style.color = 'rgba(255,255,255,var(--op))';
+                p.style.left = Math.random()*1920+'px'; p.style.top = Math.random()*1080+'px';
+                canvas.appendChild(p);
+                tl.to(p, { rotation: 360, scale: 1.5, duration: dur, ease: "power1.inOut" }, 0);
+                tl.to(p, { x: "+=100", y: "+=50", duration: dur, ease: "none" }, 0);
+            }
+        }
+
+        function effectRings(dur) {
+            for(let i=0; i<15; i++) {
+                const r = document.createElement('div');
+                r.className = 'shape';
+                r.style.width = r.style.height = (i*150)+'px';
+                r.style.border = '2px solid rgba(255,255,255,var(--op))';
+                r.style.background = 'none'; r.style.borderRadius = '50%';
+                r.style.position = 'absolute';
+                canvas.appendChild(r);
+                tl.fromTo(r, { scale: 0.8, opacity: 0 }, { scale: 1.2, opacity: 1, duration: dur/2, yoyo: true, repeat: 1, ease: "sine.inOut" }, i*0.1);
+            }
+        }
+
+        function effectHex(dur, accent) {
+            canvas.innerHTML = `<svg width="2200" height="1200" style="left:-100px;top:-100px">
+                <defs><pattern id="h" width="100" height="173.2" patternUnits="userSpaceOnUse">
+                <path d="M50 0 L100 28.8 L100 86.6 L50 115.4 L0 86.6 L0 28.8 Z" fill="none" stroke="${accent}" stroke-width="2" opacity="var(--op)" />
+                </pattern></defs><rect width="100%" height="100%" fill="url(#h)" /></svg>`;
+            tl.to(canvas.querySelector('rect'), { x: 100, y: 173.2, duration: dur, ease: "none" }, 0);
+        }
+
+        function effectDiagonal(dur) {
+            canvas.style.backgroundImage = `repeating-linear-gradient(-45deg, rgba(255,255,255,var(--op)) 0px, rgba(255,255,255,var(--op)) 2px, transparent 2px, transparent 40px)`;
+            tl.to(canvas, { backgroundPosition: "56px 56px", duration: dur, ease: "none" }, 0);
+        }
+
+        function effectTriangles(dur) {
+            for(let i=0; i<40; i++) {
+                const t = document.createElement('div');
+                t.style.width = t.style.height = '0';
+                t.style.borderLeft = '40px solid transparent'; t.style.borderRight = '40px solid transparent';
+                t.style.borderBottom = '70px solid rgba(255,255,255,var(--op))';
+                t.style.position = 'absolute';
+                t.style.left = Math.random()*1920+'px'; t.style.top = Math.random()*1080+'px';
+                canvas.appendChild(t);
+                tl.to(t, { rotation: 720, x: "random(-200, 200)", y: "random(-200, 200)", duration: dur, ease: "none" }, 0);
+            }
+        }
+
+        function effectStripes(dur) {
+            for(let i=0; i<25; i++) {
+                const b = document.createElement('div');
+                b.className = 'shape';
+                b.style.width = '2px'; b.style.height = '2000px';
+                b.style.left = (i * 120)+'px'; b.style.top = '-500px';
+                b.style.transform = 'rotate(20deg)';
+                canvas.appendChild(b);
+                tl.fromTo(b, { opacity: 0 }, { opacity: 1, duration: dur/2, yoyo: true, repeat: 1 }, i*0.05);
+                tl.to(b, { x: 120, duration: dur, ease: "none" }, 0);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+    "settings": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "duration": 5
+    },
+    "tasks": [
+        { "name": "01_Pro_Squares", "type": "squares", "color": "#1a1a1a", "accent": "#ffffff", "op": 0.1 },
+        { "name": "02_Cyber_Grid", "type": "grid", "color": "#0a0a2e", "accent": "#00d4ff", "op": 0.15 },
+        { "name": "03_Soft_Waves", "type": "waves", "color": "#2c3e50", "accent": "#ecf0f1", "op": 0.08 },
+        { "name": "04_Abstract_Dots", "type": "dots", "color": "#000000", "accent": "#f1c40f", "op": 0.12 },
+        { "name": "05_Geometric_Plus", "type": "plus", "color": "#1e272e", "accent": "#ff3f34", "op": 0.1 },
+        { "name": "06_Infinite_Rings", "type": "rings", "color": "#2f3542", "accent": "#70a1ff", "op": 0.15 },
+        { "name": "07_Diagonal_Flow", "type": "diagonal", "color": "#121212", "accent": "#ffffff", "op": 0.05 },
+        { "name": "08_Hex_Pulse", "type": "hex", "color": "#000000", "accent": "#2ecc71", "op": 0.1 },
+        { "name": "09_Floating_Triangles", "type": "triangles", "color": "#2d3436", "accent": "#a29bfe", "op": 0.12 },
+        { "name": "10_Moving_Stripes", "type": "stripes", "color": "#1e1e1e", "accent": "#ffffff", "op": 0.07 }
+    ]
+}
