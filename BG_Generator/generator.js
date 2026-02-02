@@ -7,8 +7,8 @@ const DATA = fs.readJsonSync('config.json');
 const TEMP_DIR = path.join(__dirname, 'temp_frames');
 const OUTPUT_DIR = path.join(__dirname, 'output');
 
-async function renderTask(task, settings, browser) {
-    console.log(`\n🎬 Rendering Task: ${task.name} (${task.type})`);
+async function renderTask(task, global, settings, browser) {
+    console.log(`\n🎬 Rendering: ${task.name} [Type: ${task.type}]`);
     fs.emptyDirSync(TEMP_DIR);
 
     const page = await browser.newPage();
@@ -17,8 +17,8 @@ async function renderTask(task, settings, browser) {
     const htmlPath = `file://${path.join(__dirname, 'engine.html')}`;
     await page.goto(htmlPath);
 
-    // تهيئة التأثير
-    await page.evaluate((t, s) => { window.init(t, s); }, task, settings);
+    // تنفيذ منطق التوحيد والدمج داخل المتصفح
+    await page.evaluate((t, g, s) => { window.init(t, g, s); }, task, global, settings);
 
     const totalFrames = settings.duration * settings.fps;
     
@@ -27,38 +27,31 @@ async function renderTask(task, settings, browser) {
         await page.evaluate((t) => { window.seekTo(t); }, time);
         
         const frameName = `frame_${String(i).padStart(5, '0')}.png`;
-        await page.screenshot({ path: path.join(TEMP_DIR, frameName), type: 'png' });
+        await page.screenshot({ path: path.join(TEMP_DIR, frameName) });
 
-        const progress = Math.round((i / totalFrames) * 100);
-        process.stdout.write(`\r   📸 Progress: [${progress}%] Frame: ${i}/${totalFrames}`);
+        process.stdout.write(`\r   📸 Progress: ${Math.round((i/totalFrames)*100)}%`);
     }
 
     await page.close();
 
-    // التجميع بواسطة FFmpeg
     const outputFile = path.join(OUTPUT_DIR, `${task.name}.mp4`);
-    const ffmpegCmd = `ffmpeg -y -framerate ${settings.fps} -i "${TEMP_DIR}/frame_%05d.png" -c:v libx264 -pix_fmt yuv420p -crf 18 "${outputFile}"`;
+    // جودة CRF 17 تعطي وضوحاً فائقاً
+    const ffmpegCmd = `ffmpeg -y -framerate ${settings.fps} -i "${TEMP_DIR}/frame_%05d.png" -c:v libx264 -pix_fmt yuv420p -crf 17 "${outputFile}"`;
     
-    try {
-        execSync(ffmpegCmd, { stdio: 'ignore' });
-        console.log(`\n   ✅ Exported: ${task.name}.mp4`);
-    } catch (err) {
-        console.error(`\n   ❌ FFmpeg Error on ${task.name}:`, err.message);
-    }
+    execSync(ffmpegCmd, { stdio: 'ignore' });
+    console.log(`\n   ✅ Exported to output/${task.name}.mp4`);
 }
 
 async function main() {
-    console.log("🚀 Starting Pro Background Generator System...");
     fs.ensureDirSync(OUTPUT_DIR);
-
     const browser = await puppeteer.launch({ headless: "new" });
 
     for (const task of DATA.tasks) {
-        await renderTask(task, DATA.settings, browser);
+        await renderTask(task, DATA.global, DATA.settings, browser);
     }
 
     await browser.close();
-    console.log("\n✨ All tasks completed successfully!");
+    console.log("\n✨ All videos generated successfully!");
 }
 
 main();

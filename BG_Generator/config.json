@@ -3,18 +3,34 @@
         "width": 1920,
         "height": 1080,
         "fps": 30,
-        "duration": 5
+        "duration": 6
+    },
+    "global": {
+        "color": "#0f0f0f",
+        "accent": "#ffffff",
+        "op": 0.1
     },
     "tasks": [
-        { "name": "01_Pro_Squares", "type": "squares", "color": "#1a1a1a", "accent": "#ffffff", "op": 0.1 },
-        { "name": "02_Cyber_Grid", "type": "grid", "color": "#0a0a2e", "accent": "#00d4ff", "op": 0.15 },
-        { "name": "03_Soft_Waves", "type": "waves", "color": "#2c3e50", "accent": "#ecf0f1", "op": 0.08 },
-        { "name": "04_Abstract_Dots", "type": "dots", "color": "#000000", "accent": "#f1c40f", "op": 0.12 },
-        { "name": "05_Geometric_Plus", "type": "plus", "color": "#1e272e", "accent": "#ff3f34", "op": 0.1 },
-        { "name": "06_Infinite_Rings", "type": "rings", "color": "#2f3542", "accent": "#70a1ff", "op": 0.15 },
-        { "name": "07_Diagonal_Flow", "type": "diagonal", "color": "#121212", "accent": "#ffffff", "op": 0.05 },
-        { "name": "08_Hex_Pulse", "type": "hex", "color": "#000000", "accent": "#2ecc71", "op": 0.1 },
-        { "name": "09_Floating_Triangles", "type": "triangles", "color": "#2d3436", "accent": "#a29bfe", "op": 0.12 },
-        { "name": "10_Moving_Stripes", "type": "stripes", "color": "#1e1e1e", "accent": "#ffffff", "op": 0.07 }
+        { "name": "01_Pro_Squares", "type": "squares", "color": "#1a1a2e", "accent": "#16213e", "op": 0.2 },
+        { "name": "02_Liquid_Blue", "type": "waves", "color": "#00051e", "accent": "#0077ff" },
+        { "name": "03_Cyber_Dots", "type": "dots", "accent": "#00ffcc", "op": 0.15 },
+        { "name": "04_Infinite_Rings", "type": "rings", "color": "#111", "accent": "#f1c40f" },
+        { "name": "05_Modern_Plus", "type": "plus", "color": "#1e272e" },
+        { "name": "06_Matrix_Hex", "type": "hex", "accent": "#2ecc71", "op": 0.08 },
+        { "name": "07_Minimal_Diagonal", "type": "diagonal", "color": "#2c3e50" },
+        { "name": "08_Abstract_Tri", "type": "triangles", "accent": "#e67e22" },
+        { "name": "09_Design_Stripes", "type": "stripes", "color": "#2d3436" },
+        { "name": "10_Digital_Glitch", "type": "glitch", "accent": "#ff3f34", "op": 0.12 },
+        
+        { "name": "11_Retro_Grid", "type": "grid_perspective", "color": "#000000", "accent": "#fd79a8", "op": 0.2 },
+        { "name": "12_UI_Isometric", "type": "grid_isometric", "color": "#1e3799", "accent": "#4bcffa" },
+        { "name": "13_Engineer_Blueprint", "type": "grid_blueprint", "color": "#0a3d62", "accent": "#3c6382" },
+        { "name": "14_Soft_Dot_Grid", "type": "grid_dots", "color": "#0c0c0c", "accent": "#ffffff", "op": 0.05 },
+        { "name": "15_Security_Scan", "type": "grid_scan", "accent": "#3ae374" },
+        { "name": "16_Topo_Map", "type": "grid_topo", "color": "#212121", "accent": "#ffa801", "op": 0.07 },
+        { "name": "17_Military_Radar", "type": "grid_radar", "color": "#051105", "accent": "#2ecc71" },
+        { "name": "18_Double_Flux", "type": "grid_double", "color": "#121212", "accent": "#7d5fff" },
+        { "name": "19_Math_Cross", "type": "grid_cross", "color": "#000000", "accent": "#ffffff", "op": 0.1 },
+        { "name": "20_Space_Energy", "type": "grid_energy", "color": "#000000", "accent": "#fffa65" }
     ]
 }

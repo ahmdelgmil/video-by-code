@@ -2,12 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { margin: 0; padding: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
-        #canvas { width: 1920px; height: 1080px; position: relative; overflow: hidden; }
-        .layer { position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; }
-        .shape { position: absolute; background-color: rgba(255, 255, 255, var(--op)); }
-        svg { position: absolute; }
+        :root {
+            --bg-color: #111;
+            --acc-color: #fff;
+            --op: 0.1;
+        }
+        body, html {
+            margin: 0; padding: 0;
+            width: 1920px; height: 1080px;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            font-family: sans-serif;
+        }
+        #canvas {
+            width: 1920px; height: 1080px;
+            position: relative;
+            overflow: hidden;
+        }
+        .layer {
+            position: absolute; width: 100%; height: 100%;
+            top: 0; left: 0;
+        }
+        .shape {
+            position: absolute;
+            background-color: var(--acc-color);
+            opacity: var(--op);
+            will-change: transform, opacity;
+        }
+        svg {
+            position: absolute;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        /* تأثير تنعيم الحواف (Grainy Texture) لإضافة لمسة سينمائية */
+        #canvas::after {
+            content: "";
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
@@ -20,153 +56,312 @@
 
         window.seekTo = (t) => tl.seek(t);
 
-        window.init = (task, settings) => {
+        window.init = (task, global, settings) => {
             canvas.innerHTML = '';
             tl.kill();
             tl = gsap.timeline({ paused: true });
             
-            canvas.style.backgroundColor = task.color;
-            document.documentElement.style.setProperty('--op', task.op);
+            const color = task.color || global.color;
+            const accent = task.accent || global.accent;
+            const op = task.op || global.op;
             const dur = settings.duration;
 
-            // استدعاء التأثير بناءً على النوع
-            const effects = {
-                squares: effectSquares, grid: effectGrid, waves: effectWaves,
-                dots: effectDots, plus: effectPlus, rings: effectRings,
-                diagonal: effectDiagonal, hex: effectHex, triangles: effectTriangles,
-                stripes: effectStripes
-            };
-            if(effects[task.type]) effects[task.type](dur, task.accent);
+            document.documentElement.style.setProperty('--bg-color', color);
+            document.documentElement.style.setProperty('--acc-color', accent);
+            document.documentElement.style.setProperty('--op', op);
+
+            if (effects[task.type]) {
+                effects[task.type](dur, accent, op);
+            }
         };
 
-        // --- التأثيرات الاحترافية ---
+        const effects = {
+            // 1. المربعات المتحولة (Morphing Squares)
+            squares: (dur) => {
+                const size = 180;
+                for(let i = -1; i < 12; i++) {
+                    for(let j = -1; j < 7; j++) {
+                        const s = document.createElement('div');
+                        s.className = 'shape';
+                        s.style.width = s.style.height = size + 'px';
+                        s.style.left = (i * size * 1.1) + 'px';
+                        s.style.top = (j * size * 1.1) + 'px';
+                        canvas.appendChild(s);
+                        
+                        tl.fromTo(s, 
+                            { rotation: 0, borderRadius: "10%", scale: 0.8 },
+                            { rotation: 180, borderRadius: "50%", scale: 1.1, duration: dur/2, yoyo: true, repeat: 1, ease: "expo.inOut" }, 0
+                        );
+                        tl.to(s, { x: size * 1.1, y: size * 1.1, duration: dur, ease: "none" }, 0);
+                    }
+                }
+            },
 
-        function effectSquares(dur) {
-            const size = 120;
-            const gap = 40;
-            for(let i = -2; i < 15; i++) {
-                for(let j = -2; j < 10; j++) {
+            // 2. الأمواج السائلة متعددة الطبقات (Liquid Waves)
+            waves: (dur) => {
+                for(let i=0; i<6; i++) {
+                    const w = document.createElement('div');
+                    w.className = 'shape';
+                    w.style.width = '3500px'; w.style.height = '3500px';
+                    w.style.borderRadius = `${45+i}% ${55-i}% ${40+i}% ${50-i}%`;
+                    w.style.top = '10%'; w.style.left = '-40%';
+                    w.style.backgroundColor = 'transparent';
+                    w.style.border = `40px solid var(--acc-color)`;
+                    canvas.appendChild(w);
+                    tl.to(w, { rotation: 360, duration: dur, ease: "none" }, 0);
+                    tl.fromTo(w, { scale: 0.9 + (i*0.05) }, { scale: 1.2, duration: dur/2, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
+                }
+            },
+
+            // 3. مصفوفة النقاط الذكية (Smart Dot Matrix)
+            dots: (dur) => {
+                const gap = 80;
+                for(let x=0; x<=1920+gap; x+=gap) {
+                    for(let y=0; y<=1080+gap; y+=gap) {
+                        const d = document.createElement('div');
+                        d.className = 'shape';
+                        d.style.width = d.style.height = '10px';
+                        d.style.borderRadius = '50%';
+                        d.style.left = x+'px'; d.style.top = y+'px';
+                        canvas.appendChild(d);
+                        tl.fromTo(d, { opacity: 0, scale: 0 }, { opacity: 1, scale: 2.5, duration: dur/2, yoyo: true, repeat: 1, ease: "back.out(2)" }, (x+y)*0.0005);
+                    }
+                }
+                tl.to(canvas.childNodes, { x: gap, y: gap, duration: dur, ease: "none" }, 0);
+            },
+
+            // 4. حلقات الخيال (Concentric Rings)
+            rings: (dur) => {
+                for(let i=0; i<12; i++) {
+                    const r = document.createElement('div');
+                    r.className = 'shape';
+                    r.style.width = r.style.height = (i*250)+'px';
+                    r.style.border = '2px solid var(--acc-color)';
+                    r.style.background = 'none'; r.style.borderRadius = '50%';
+                    r.style.left = '50%'; r.style.top = '50%';
+                    r.style.transform = 'translate(-50%, -50%)';
+                    canvas.appendChild(r);
+                    tl.fromTo(r, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1.5, duration: dur/2, yoyo: true, repeat: 1, ease: "power2.inOut" }, i*0.1);
+                }
+            },
+
+            // 5. علامات الجمع العائمة (3D-ish Plus Signs)
+            plus: (dur) => {
+                for(let i=0; i<40; i++) {
+                    const p = document.createElement('div');
+                    p.innerHTML = '＋'; p.className = 'shape';
+                    p.style.background = 'none'; p.style.fontSize = '80px'; p.style.color = 'var(--acc-color)';
+                    p.style.left = Math.random()*1920+'px'; p.style.top = Math.random()*1080+'px';
+                    canvas.appendChild(p);
+                    tl.to(p, { rotation: 360, x: "random(-200, 200)", y: "random(-200, 200)", duration: dur, ease: "none" }, 0);
+                    tl.fromTo(p, { scale: 0.5, opacity: 0 }, { scale: 1.5, opacity: 1, duration: dur/2, yoyo: true, repeat: 1 }, 0);
+                }
+            },
+
+            // 6. نبض خلايا النحل (Hexagon Breathing)
+            hex: (dur, acc) => {
+                canvas.innerHTML = `<svg viewBox="0 0 1000 1000" preserveAspectRatio="none">
+                    <defs><pattern id="h" width="100" height="173.2" patternUnits="userSpaceOnUse" viewBox="0 0 100 173.2">
+                    <path d="M50 0 L100 28.8 L100 86.6 L50 115.4 L0 86.6 L0 28.8 Z" fill="none" stroke="${acc}" stroke-width="1" />
+                    </pattern></defs><rect width="2000" height="2000" fill="url(#h)" opacity="var(--op)" /> </svg>`;
+                tl.to(canvas.querySelector('rect'), { x: 100, y: 173.2, duration: dur, ease: "none" }, 0);
+                tl.fromTo(canvas.querySelector('rect'), { opacity: 0.05 }, { opacity: 0.3, duration: dur/2, yoyo: true, repeat: 1 }, 0);
+            },
+
+            // 7. التدفق المائل المتوازي (Diagonal Parallax)
+            diagonal: (dur) => {
+                for(let i=0; i<3; i++) {
+                    const d = document.createElement('div');
+                    d.style.position = 'absolute'; d.style.width = '300%'; d.style.height = '300%';
+                    d.style.backgroundImage = `repeating-linear-gradient(${45+(i*10)}deg, var(--acc-color) 0, var(--acc-color) 2px, transparent 2px, transparent 60px)`;
+                    d.style.opacity = (0.05 + i*0.05);
+                    d.style.left = "-100%"; d.style.top = "-100%";
+                    canvas.appendChild(d);
+                    tl.to(d, { x: 100*(i+1), y: 100*(i+1), duration: dur, ease: "none" }, 0);
+                }
+            },
+
+            // 8. شظايا المثلثات (Triangle Fragments)
+            triangles: (dur) => {
+                for(let i=0; i<30; i++) {
+                    const t = document.createElement('div');
+                    t.style.width = t.style.height = '0';
+                    t.style.borderLeft = '50px solid transparent'; t.style.borderRight = '50px solid transparent';
+                    t.style.borderBottom = '86px solid var(--acc-color)';
+                    t.className = 'shape'; t.style.background = 'none';
+                    t.style.left = Math.random()*1920+'px'; t.style.top = Math.random()*1080+'px';
+                    canvas.appendChild(t);
+                    tl.to(t, { rotation: 720, duration: dur, ease: "none" }, 0);
+                    tl.fromTo(t, { scale: 0.2 }, { scale: 1.5, duration: dur/2, yoyo: true, repeat: 1 }, 0);
+                }
+            },
+
+            // 9. خطوط التصميم المعماري (Architectural Stripes)
+            stripes: (dur) => {
+                for(let i=0; i<20; i++) {
                     const s = document.createElement('div');
                     s.className = 'shape';
-                    s.style.width = s.style.height = size + 'px';
-                    s.style.left = (i * (size + gap)) + 'px';
-                    s.style.top = (j * (size + gap)) + 'px';
+                    s.style.width = '1px'; s.style.height = '3000px';
+                    s.style.left = (i*100)+'px'; s.style.top = '-1000px';
+                    s.style.transform = 'rotate(30deg)';
                     canvas.appendChild(s);
-                    
-                    // انيميشن مركب: دوران + تكبير + إزاحة
-                    tl.fromTo(s, 
-                        { rotation: 0, scale: 0.8, borderRadius: "20%" },
-                        { rotation: 90, scale: 1.1, borderRadius: "0%", duration: dur/2, yoyo: true, repeat: 1, ease: "expo.inOut" }, 0
-                    );
-                    tl.to(s, { x: size + gap, y: size + gap, duration: dur, ease: "none" }, 0);
+                    tl.to(s, { x: 100, duration: dur, ease: "none" }, 0);
+                    tl.fromTo(s, { opacity: 0 }, { opacity: 0.5, duration: dur/2, yoyo: true, repeat: 1 }, i*0.05);
+                }
+            },
+
+            // 10. التداخل الرقمي (Digital Glitch Lines)
+            glitch: (dur) => {
+                for(let i=0; i<50; i++) {
+                    const g = document.createElement('div');
+                    g.className = 'shape';
+                    g.style.width = Math.random()*400+100+'px'; g.style.height = '2px';
+                    g.style.left = Math.random()*1920+'px'; g.style.top = Math.random()*1080+'px';
+                    canvas.appendChild(g);
+                    tl.to(g, { x: 200, duration: dur, ease: "none" }, 0);
+                    tl.fromTo(g, { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1.5, duration: 0.2, repeat: dur/0.2, yoyo: true, ease: "steps(3)" }, 0);
+                }
+            },
+
+            // --- GRIDS (11-20) ---
+
+            // 11. أرضية سايبربنك (Perspective Grid)
+            grid_perspective: (dur, acc) => {
+                canvas.innerHTML = `<div class="layer" style="perspective: 800px;">
+                    <div id="grid-inner" style="width:200%; height:200%; left:-50%; top:-50%; position:absolute; transform: rotateX(60deg);
+                    background-image: linear-gradient(${acc} 2px, transparent 2px), linear-gradient(90deg, ${acc} 2px, transparent 2px);
+                    background-size: 100px 100px; opacity: var(--op);"></div></div>`;
+                tl.to("#grid-inner", { backgroundPosition: "0 100px", duration: dur, ease: "none" }, 0);
+            },
+
+            // 12. الشبكة الأيزومترية (Isometric Grid)
+            grid_isometric: (dur, acc) => {
+                const g = document.createElement('div');
+                g.style.width = '300%'; g.style.height = '300%';
+                g.style.left = '-100%'; g.style.top = '-100%';
+                g.style.position = 'absolute';
+                g.style.backgroundImage = `linear-gradient(30deg, ${acc} 1px, transparent 1px), linear-gradient(150deg, ${acc} 1px, transparent 1px)`;
+                g.style.backgroundSize = '80px 140px';
+                g.style.opacity = 'var(--op)';
+                canvas.appendChild(g);
+                tl.to(g, { x: 80, y: 140, duration: dur, ease: "none" }, 0);
+            },
+
+            // 13. مخطط هندسي (Blueprint)
+            grid_blueprint: (dur, acc) => {
+                canvas.innerHTML = `<div style="width:100%;height:100%;background-image: 
+                    radial-gradient(${acc} 2px, transparent 0), linear-gradient(${acc}33 1px, transparent 1px), linear-gradient(90deg, ${acc}33 1px, transparent 1px);
+                    background-size: 100px 100px, 100px 100px, 100px 100px; opacity: var(--op)"></div>`;
+                tl.to(canvas.firstChild, { backgroundPosition: "100px 100px", duration: dur, ease: "none" }, 0);
+            },
+
+            // 14. مصفوفة الـ UI (High-end Dot Grid)
+            grid_dots: (dur, acc) => {
+                const g = document.createElement('div');
+                g.style.width = '100%'; g.style.height = '100%';
+                g.style.backgroundImage = `radial-gradient(${acc} 3px, transparent 0)`;
+                g.style.backgroundSize = '50px 50px';
+                g.style.opacity = 'var(--op)';
+                canvas.appendChild(g);
+                tl.fromTo(g, { opacity: 0.05 }, { opacity: 0.3, duration: dur/2, yoyo: true, repeat: 1 }, 0);
+                tl.to(g, { backgroundPosition: "50px 50px", duration: dur, ease: "none" }, 0);
+            },
+
+            // 15. ماسح الليزر (Scanning Laser Grid)
+            grid_scan: (dur, acc) => {
+                this.grid_perspective(dur, acc); // نستخدم الجريد الأساسي
+                const line = document.createElement('div');
+                line.style.width = '100%'; line.style.height = '5px';
+                line.style.background = `linear-gradient(90deg, transparent, ${acc}, transparent)`;
+                line.style.position = 'absolute'; line.style.top = '0';
+                canvas.appendChild(line);
+                tl.to(line, { top: '100%', duration: dur, ease: "none" }, 0);
+            },
+
+            // 16. الارتفاعات الطبوغرافية (Topographic Lines)
+            grid_topo: (dur, acc) => {
+                canvas.innerHTML = `<svg viewBox="0 0 1000 1000" preserveAspectRatio="none">
+                    <g id="topo-group" opacity="var(--op)" fill="none" stroke="${acc}" stroke-width="2"></g></svg>`;
+                const group = canvas.querySelector('#topo-group');
+                for(let i=0; i<15; i++) {
+                    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    const d = `M -100 ${i*100} Q 250 ${i*100-80} 500 ${i*100} T 1100 ${i*100}`;
+                    p.setAttribute("d", d);
+                    group.appendChild(p);
+                }
+                tl.to(group, { y: 100, duration: dur, ease: "none" }, 0);
+            },
+
+            // 17. شاشة الرادار (Radar Sonar)
+            grid_radar: (dur, acc) => {
+                const group = document.createElement('div');
+                group.className = 'layer';
+                canvas.appendChild(group);
+                for(let i=1; i<=6; i++) {
+                    const r = document.createElement('div');
+                    r.className = 'shape'; r.style.background='none';
+                    r.style.border = `1px solid ${acc}`; r.style.borderRadius = '50%';
+                    r.style.width = r.style.height = (i*300) + 'px';
+                    r.style.left = '50%'; r.style.top = '50%';
+                    r.style.transform = 'translate(-50%, -50%)';
+                    group.appendChild(r);
+                }
+                const sweep = document.createElement('div');
+                sweep.style.width = '1000px'; sweep.style.height = '1000px';
+                sweep.style.background = `conic-gradient(from 0deg, ${acc}44, transparent 90deg)`;
+                sweep.style.position='absolute'; sweep.style.left='50%'; sweep.style.top='50%';
+                sweep.style.transformOrigin = 'top left';
+                canvas.appendChild(sweep);
+                tl.to(sweep, { rotation: 360, duration: dur, ease: "none" }, 0);
+            },
+
+            // 18. التداخل المزدوج (Double Flux Grid)
+            grid_double: (dur, acc) => {
+                const g1 = document.createElement('div');
+                g1.style.width = g1.style.height = '200%';
+                g1.style.backgroundImage = `repeating-linear-gradient(45deg, ${acc} 1px, transparent 1px, transparent 40px)`;
+                g1.style.position = 'absolute'; g1.style.opacity = 'var(--op)';
+                const g2 = g1.cloneNode();
+                g2.style.backgroundImage = `repeating-linear-gradient(-45deg, ${acc} 1px, transparent 1px, transparent 40px)`;
+                canvas.appendChild(g1); canvas.appendChild(g2);
+                tl.to(g1, { x: 40, duration: dur, ease: "none" }, 0);
+                tl.to(g2, { x: -40, duration: dur, ease: "none" }, 0);
+            },
+
+            // 19. مصفوفة التقاطع (Cross Matrix)
+            grid_cross: (dur, acc) => {
+                const gap = 100;
+                for(let x=0; x<=1920; x+=gap) {
+                    for(let y=0; y<=1080; y+=gap) {
+                        const c = document.createElement('div');
+                        c.innerHTML = '＋'; c.className = 'shape';
+                        c.style.background='none'; c.style.color=acc; c.style.fontSize='20px';
+                        c.style.left = x+'px'; c.style.top = y+'px';
+                        canvas.appendChild(c);
+                        tl.fromTo(c, { rotation: 0, scale: 0.5 }, { rotation: 180, scale: 1.2, duration: dur/2, yoyo: true, repeat: 1, ease: "back.inOut" }, (x+y)*0.0005);
+                    }
+                }
+                tl.to(canvas.childNodes, { x: gap, duration: dur, ease: "none" }, 0);
+            },
+
+            // 20. حقل الطاقة (Energy Field Nodes)
+            grid_energy: (dur, acc) => {
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                canvas.appendChild(svg);
+                for(let i=0; i<30; i++) {
+                    const x1 = Math.random()*1920, y1 = Math.random()*1080;
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", x1); circle.setAttribute("cy", y1);
+                    circle.setAttribute("r", "4"); circle.setAttribute("fill", acc);
+                    circle.setAttribute("opacity", "var(--op)");
+                    svg.appendChild(circle);
+                    tl.to(circle, { 
+                        cx: "+=100", cy: "+=50", duration: dur, ease: "none"
+                    }, 0);
+                    tl.fromTo(circle, { opacity: 0.1 }, { opacity: 1, duration: dur/2, yoyo: true, repeat: 1 }, Math.random()*dur);
                 }
             }
-        }
-
-        function effectGrid(dur, accent) {
-            const grid = document.createElement('div');
-            grid.style.width = "250%"; grid.style.height = "250%";
-            grid.style.backgroundImage = `linear-gradient(${accent}1a 2px, transparent 2px), linear-gradient(90deg, ${accent}1a 2px, transparent 2px)`;
-            grid.style.backgroundSize = "100px 100px";
-            grid.style.transform = "rotateX(60deg) translateY(-200px)";
-            canvas.appendChild(grid);
-            tl.to(grid, { backgroundPosition: "0 100px", duration: dur, ease: "none" }, 0);
-        }
-
-        function effectWaves(dur) {
-            for(let i=0; i<8; i++) {
-                const w = document.createElement('div');
-                w.className = 'shape';
-                w.style.width = '2500px'; w.style.height = '2500px';
-                w.style.borderRadius = '38% 42% 40% 45%';
-                w.style.top = (500 + i*40) + 'px';
-                w.style.left = '-300px';
-                w.style.opacity = (1 - i*0.1);
-                canvas.appendChild(w);
-                tl.to(w, { rotation: 360, duration: dur, ease: "none" }, 0);
-                tl.to(w, { scale: 1.1, yoyo: true, repeat: 1, duration: dur/2 }, 0);
-            }
-        }
-
-        function effectDots(dur) {
-            const gap = 120;
-            for(let x=0; x<2100; x+=gap) {
-                for(let y=0; y<1200; y+=gap) {
-                    const d = document.createElement('div');
-                    d.className = 'shape';
-                    d.style.width = d.style.height = '15px';
-                    d.style.borderRadius = '50%';
-                    d.style.left = x+'px'; d.style.top = y+'px';
-                    canvas.appendChild(d);
-                    tl.fromTo(d, { scale: 0 }, { scale: 2, duration: dur/2, yoyo: true, repeat: 1, ease: "elastic.out(1, 0.3)" }, (x+y)*0.0004);
-                }
-            }
-        }
-
-        function effectPlus(dur) {
-            for(let i=0; i<60; i++) {
-                const p = document.createElement('div');
-                p.innerHTML = '+'; p.className = 'shape';
-                p.style.background = 'none'; p.style.fontSize = '60px';
-                p.style.color = 'rgba(255,255,255,var(--op))';
-                p.style.left = Math.random()*1920+'px'; p.style.top = Math.random()*1080+'px';
-                canvas.appendChild(p);
-                tl.to(p, { rotation: 360, scale: 1.5, duration: dur, ease: "power1.inOut" }, 0);
-                tl.to(p, { x: "+=100", y: "+=50", duration: dur, ease: "none" }, 0);
-            }
-        }
-
-        function effectRings(dur) {
-            for(let i=0; i<15; i++) {
-                const r = document.createElement('div');
-                r.className = 'shape';
-                r.style.width = r.style.height = (i*150)+'px';
-                r.style.border = '2px solid rgba(255,255,255,var(--op))';
-                r.style.background = 'none'; r.style.borderRadius = '50%';
-                r.style.position = 'absolute';
-                canvas.appendChild(r);
-                tl.fromTo(r, { scale: 0.8, opacity: 0 }, { scale: 1.2, opacity: 1, duration: dur/2, yoyo: true, repeat: 1, ease: "sine.inOut" }, i*0.1);
-            }
-        }
-
-        function effectHex(dur, accent) {
-            canvas.innerHTML = `<svg width="2200" height="1200" style="left:-100px;top:-100px">
-                <defs><pattern id="h" width="100" height="173.2" patternUnits="userSpaceOnUse">
-                <path d="M50 0 L100 28.8 L100 86.6 L50 115.4 L0 86.6 L0 28.8 Z" fill="none" stroke="${accent}" stroke-width="2" opacity="var(--op)" />
-                </pattern></defs><rect width="100%" height="100%" fill="url(#h)" /></svg>`;
-            tl.to(canvas.querySelector('rect'), { x: 100, y: 173.2, duration: dur, ease: "none" }, 0);
-        }
-
-        function effectDiagonal(dur) {
-            canvas.style.backgroundImage = `repeating-linear-gradient(-45deg, rgba(255,255,255,var(--op)) 0px, rgba(255,255,255,var(--op)) 2px, transparent 2px, transparent 40px)`;
-            tl.to(canvas, { backgroundPosition: "56px 56px", duration: dur, ease: "none" }, 0);
-        }
-
-        function effectTriangles(dur) {
-            for(let i=0; i<40; i++) {
-                const t = document.createElement('div');
-                t.style.width = t.style.height = '0';
-                t.style.borderLeft = '40px solid transparent'; t.style.borderRight = '40px solid transparent';
-                t.style.borderBottom = '70px solid rgba(255,255,255,var(--op))';
-                t.style.position = 'absolute';
-                t.style.left = Math.random()*1920+'px'; t.style.top = Math.random()*1080+'px';
-                canvas.appendChild(t);
-                tl.to(t, { rotation: 720, x: "random(-200, 200)", y: "random(-200, 200)", duration: dur, ease: "none" }, 0);
-            }
-        }
-
-        function effectStripes(dur) {
-            for(let i=0; i<25; i++) {
-                const b = document.createElement('div');
-                b.className = 'shape';
-                b.style.width = '2px'; b.style.height = '2000px';
-                b.style.left = (i * 120)+'px'; b.style.top = '-500px';
-                b.style.transform = 'rotate(20deg)';
-                canvas.appendChild(b);
-                tl.fromTo(b, { opacity: 0 }, { opacity: 1, duration: dur/2, yoyo: true, repeat: 1 }, i*0.05);
-                tl.to(b, { x: 120, duration: dur, ease: "none" }, 0);
-            }
-        }
+        };
     </script>
 </body>
 </html>
