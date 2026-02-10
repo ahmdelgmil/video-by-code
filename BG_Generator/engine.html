@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
             --bg-color: #111;
@@ -15,34 +14,28 @@
             background-color: var(--bg-color);
             overflow: hidden;
             display: flex; justify-content: center; align-items: center;
-            font-family: sans-serif;
         }
         #canvas {
             width: 1920px; height: 1080px;
             position: relative;
             overflow: hidden;
         }
-        .layer {
-            position: absolute; width: 100%; height: 100%;
-            top: 0; left: 0;
-        }
         .shape {
             position: absolute;
             background-color: var(--acc-color);
             opacity: var(--op);
-            will-change: transform, opacity;
+            will-change: transform;
         }
         svg {
             position: absolute;
             width: 100%; height: 100%;
             pointer-events: none;
         }
-        /* تأثير تنعيم الحواف (Grainy Texture) لإضافة لمسة سينمائية */
         #canvas::after {
             content: "";
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.03; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.04; pointer-events: none;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -76,7 +69,7 @@
         };
 
         const effects = {
-            // 1. المربعات المتحولة (Morphing Squares)
+            // 1. Squares
             squares: (dur) => {
                 const size = 180;
                 for(let i = -1; i < 12; i++) {
@@ -87,33 +80,26 @@
                         s.style.left = (i * size * 1.1) + 'px';
                         s.style.top = (j * size * 1.1) + 'px';
                         canvas.appendChild(s);
-                        
-                        tl.fromTo(s, 
-                            { rotation: 0, borderRadius: "10%", scale: 0.8 },
-                            { rotation: 180, borderRadius: "50%", scale: 1.1, duration: dur/2, yoyo: true, repeat: 1, ease: "expo.inOut" }, 0
-                        );
+                        tl.fromTo(s, { rotation: 0, scale: 0.8 }, { rotation: 180, scale: 1.1, duration: dur/2, yoyo: true, repeat: 1, ease: "expo.inOut" }, 0);
                         tl.to(s, { x: size * 1.1, y: size * 1.1, duration: dur, ease: "none" }, 0);
                     }
                 }
             },
-
-            // 2. الأمواج السائلة متعددة الطبقات (Liquid Waves)
+            // 2. Waves
             waves: (dur) => {
                 for(let i=0; i<6; i++) {
                     const w = document.createElement('div');
                     w.className = 'shape';
                     w.style.width = '3500px'; w.style.height = '3500px';
-                    w.style.borderRadius = `${45+i}% ${55-i}% ${40+i}% ${50-i}%`;
+                    w.style.borderRadius = `${40+i}% ${50-i}% ${30+i}% ${60-i}%`;
                     w.style.top = '10%'; w.style.left = '-40%';
                     w.style.backgroundColor = 'transparent';
                     w.style.border = `40px solid var(--acc-color)`;
                     canvas.appendChild(w);
                     tl.to(w, { rotation: 360, duration: dur, ease: "none" }, 0);
-                    tl.fromTo(w, { scale: 0.9 + (i*0.05) }, { scale: 1.2, duration: dur/2, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
                 }
             },
-
-            // 3. مصفوفة النقاط الذكية (Smart Dot Matrix)
+            // 3. Dots
             dots: (dur) => {
                 const gap = 80;
                 for(let x=0; x<=1920+gap; x+=gap) {
@@ -124,13 +110,12 @@
                         d.style.borderRadius = '50%';
                         d.style.left = x+'px'; d.style.top = y+'px';
                         canvas.appendChild(d);
-                        tl.fromTo(d, { opacity: 0, scale: 0 }, { opacity: 1, scale: 2.5, duration: dur/2, yoyo: true, repeat: 1, ease: "back.out(2)" }, (x+y)*0.0005);
+                        tl.fromTo(d, { scale: 0 }, { scale: 2.5, duration: dur/2, yoyo: true, repeat: 1, ease: "back.out" }, (x+y)*0.0005);
                     }
                 }
                 tl.to(canvas.childNodes, { x: gap, y: gap, duration: dur, ease: "none" }, 0);
             },
-
-            // 4. حلقات الخيال (Concentric Rings)
+            // 4. Rings
             rings: (dur) => {
                 for(let i=0; i<12; i++) {
                     const r = document.createElement('div');
@@ -141,11 +126,10 @@
                     r.style.left = '50%'; r.style.top = '50%';
                     r.style.transform = 'translate(-50%, -50%)';
                     canvas.appendChild(r);
-                    tl.fromTo(r, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1.5, duration: dur/2, yoyo: true, repeat: 1, ease: "power2.inOut" }, i*0.1);
+                    tl.fromTo(r, { scale: 0.5, opacity: 0 }, { scale: 1.5, opacity: 1, duration: dur/2, yoyo: true, repeat: 1, ease: "power2.inOut" }, i*0.1);
                 }
             },
-
-            // 5. علامات الجمع العائمة (3D-ish Plus Signs)
+            // 5. Plus
             plus: (dur) => {
                 for(let i=0; i<40; i++) {
                     const p = document.createElement('div');
@@ -153,35 +137,27 @@
                     p.style.background = 'none'; p.style.fontSize = '80px'; p.style.color = 'var(--acc-color)';
                     p.style.left = Math.random()*1920+'px'; p.style.top = Math.random()*1080+'px';
                     canvas.appendChild(p);
-                    tl.to(p, { rotation: 360, x: "random(-200, 200)", y: "random(-200, 200)", duration: dur, ease: "none" }, 0);
-                    tl.fromTo(p, { scale: 0.5, opacity: 0 }, { scale: 1.5, opacity: 1, duration: dur/2, yoyo: true, repeat: 1 }, 0);
+                    tl.to(p, { rotation: 360, x: "+=100", y: "+=50", duration: dur, ease: "none" }, 0);
                 }
             },
-
-            // 6. نبض خلايا النحل (Hexagon Breathing)
+            // 6. Hex
             hex: (dur, acc) => {
                 canvas.innerHTML = `<svg viewBox="0 0 1000 1000" preserveAspectRatio="none">
-                    <defs><pattern id="h" width="100" height="173.2" patternUnits="userSpaceOnUse" viewBox="0 0 100 173.2">
+                    <defs><pattern id="h" width="100" height="173.2" patternUnits="userSpaceOnUse">
                     <path d="M50 0 L100 28.8 L100 86.6 L50 115.4 L0 86.6 L0 28.8 Z" fill="none" stroke="${acc}" stroke-width="1" />
                     </pattern></defs><rect width="2000" height="2000" fill="url(#h)" opacity="var(--op)" /> </svg>`;
                 tl.to(canvas.querySelector('rect'), { x: 100, y: 173.2, duration: dur, ease: "none" }, 0);
-                tl.fromTo(canvas.querySelector('rect'), { opacity: 0.05 }, { opacity: 0.3, duration: dur/2, yoyo: true, repeat: 1 }, 0);
             },
-
-            // 7. التدفق المائل المتوازي (Diagonal Parallax)
+            // 7. Diagonal
             diagonal: (dur) => {
-                for(let i=0; i<3; i++) {
-                    const d = document.createElement('div');
-                    d.style.position = 'absolute'; d.style.width = '300%'; d.style.height = '300%';
-                    d.style.backgroundImage = `repeating-linear-gradient(${45+(i*10)}deg, var(--acc-color) 0, var(--acc-color) 2px, transparent 2px, transparent 60px)`;
-                    d.style.opacity = (0.05 + i*0.05);
-                    d.style.left = "-100%"; d.style.top = "-100%";
-                    canvas.appendChild(d);
-                    tl.to(d, { x: 100*(i+1), y: 100*(i+1), duration: dur, ease: "none" }, 0);
-                }
+                const d = document.createElement('div');
+                d.style.position = 'absolute'; d.style.width = '300%'; d.style.height = '300%';
+                d.style.backgroundImage = `repeating-linear-gradient(45deg, var(--acc-color) 0, var(--acc-color) 2px, transparent 2px, transparent 60px)`;
+                d.style.opacity = 'var(--op)'; d.style.left = "-100%"; d.style.top = "-100%";
+                canvas.appendChild(d);
+                tl.to(d, { x: 60 * Math.cos(Math.PI/4), y: 60 * Math.sin(Math.PI/4), duration: dur, ease: "none" }, 0);
             },
-
-            // 8. شظايا المثلثات (Triangle Fragments)
+            // 8. Triangles
             triangles: (dur) => {
                 for(let i=0; i<30; i++) {
                     const t = document.createElement('div');
@@ -191,174 +167,143 @@
                     t.className = 'shape'; t.style.background = 'none';
                     t.style.left = Math.random()*1920+'px'; t.style.top = Math.random()*1080+'px';
                     canvas.appendChild(t);
-                    tl.to(t, { rotation: 720, duration: dur, ease: "none" }, 0);
-                    tl.fromTo(t, { scale: 0.2 }, { scale: 1.5, duration: dur/2, yoyo: true, repeat: 1 }, 0);
+                    tl.to(t, { rotation: 360, duration: dur, ease: "none" }, 0);
                 }
             },
-
-            // 9. خطوط التصميم المعماري (Architectural Stripes)
+            // 9. Stripes
             stripes: (dur) => {
                 for(let i=0; i<20; i++) {
                     const s = document.createElement('div');
-                    s.className = 'shape';
-                    s.style.width = '1px'; s.style.height = '3000px';
+                    s.className = 'shape'; s.style.width = '2px'; s.style.height = '3000px';
                     s.style.left = (i*100)+'px'; s.style.top = '-1000px';
                     s.style.transform = 'rotate(30deg)';
                     canvas.appendChild(s);
                     tl.to(s, { x: 100, duration: dur, ease: "none" }, 0);
-                    tl.fromTo(s, { opacity: 0 }, { opacity: 0.5, duration: dur/2, yoyo: true, repeat: 1 }, i*0.05);
                 }
             },
-
-            // 10. التداخل الرقمي (Digital Glitch Lines)
+            // 10. Glitch
             glitch: (dur) => {
-                for(let i=0; i<50; i++) {
+                for(let i=0; i<40; i++) {
                     const g = document.createElement('div');
-                    g.className = 'shape';
-                    g.style.width = Math.random()*400+100+'px'; g.style.height = '2px';
+                    g.className = 'shape'; g.style.width = Math.random()*300+50+'px'; g.style.height = '2px';
                     g.style.left = Math.random()*1920+'px'; g.style.top = Math.random()*1080+'px';
                     canvas.appendChild(g);
-                    tl.to(g, { x: 200, duration: dur, ease: "none" }, 0);
-                    tl.fromTo(g, { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1.5, duration: 0.2, repeat: dur/0.2, yoyo: true, ease: "steps(3)" }, 0);
+                    tl.to(g, { x: 150, duration: dur, ease: "none" }, 0);
                 }
             },
-
-            // --- GRIDS (11-20) ---
-
-            // 11. أرضية سايبربنك (Perspective Grid)
+            // 11. Perspective Grid
             grid_perspective: (dur, acc) => {
-                canvas.innerHTML = `<div class="layer" style="perspective: 800px;">
-                    <div id="grid-inner" style="width:200%; height:200%; left:-50%; top:-50%; position:absolute; transform: rotateX(60deg);
+                canvas.innerHTML = `<div style="perspective: 800px; width:100%; height:100%">
+                    <div id="gp" style="width:200%; height:200%; left:-50%; top:-50%; position:absolute; transform: rotateX(60deg);
                     background-image: linear-gradient(${acc} 2px, transparent 2px), linear-gradient(90deg, ${acc} 2px, transparent 2px);
                     background-size: 100px 100px; opacity: var(--op);"></div></div>`;
-                tl.to("#grid-inner", { backgroundPosition: "0 100px", duration: dur, ease: "none" }, 0);
+                tl.to("#gp", { backgroundPosition: "0 100px", duration: dur, ease: "none" }, 0);
             },
-
-            // 12. الشبكة الأيزومترية (Isometric Grid)
+            // 12. Isometric Grid
             grid_isometric: (dur, acc) => {
                 const g = document.createElement('div');
-                g.style.width = '300%'; g.style.height = '300%';
-                g.style.left = '-100%'; g.style.top = '-100%';
+                g.style.width = '300%'; g.style.height = '300%'; g.style.left = '-100%'; g.style.top = '-100%';
                 g.style.position = 'absolute';
                 g.style.backgroundImage = `linear-gradient(30deg, ${acc} 1px, transparent 1px), linear-gradient(150deg, ${acc} 1px, transparent 1px)`;
-                g.style.backgroundSize = '80px 140px';
-                g.style.opacity = 'var(--op)';
+                g.style.backgroundSize = '80px 140px'; g.style.opacity = 'var(--op)';
                 canvas.appendChild(g);
                 tl.to(g, { x: 80, y: 140, duration: dur, ease: "none" }, 0);
             },
-
-            // 13. مخطط هندسي (Blueprint)
+            // 13. Blueprint
             grid_blueprint: (dur, acc) => {
-                canvas.innerHTML = `<div style="width:100%;height:100%;background-image: 
-                    radial-gradient(${acc} 2px, transparent 0), linear-gradient(${acc}33 1px, transparent 1px), linear-gradient(90deg, ${acc}33 1px, transparent 1px);
-                    background-size: 100px 100px, 100px 100px, 100px 100px; opacity: var(--op)"></div>`;
-                tl.to(canvas.firstChild, { backgroundPosition: "100px 100px", duration: dur, ease: "none" }, 0);
+                const g = document.createElement('div');
+                g.style.width = '100%'; g.style.height = '100%';
+                g.style.backgroundImage = `linear-gradient(${acc}33 1px, transparent 1px), linear-gradient(90deg, ${acc}33 1px, transparent 1px)`;
+                g.style.backgroundSize = '100px 100px'; g.style.opacity = 'var(--op)';
+                canvas.appendChild(g);
+                tl.to(g, { backgroundPosition: "100px 100px", duration: dur, ease: "none" }, 0);
             },
-
-            // 14. مصفوفة الـ UI (High-end Dot Grid)
+            // 14. Dot Grid
             grid_dots: (dur, acc) => {
                 const g = document.createElement('div');
                 g.style.width = '100%'; g.style.height = '100%';
-                g.style.backgroundImage = `radial-gradient(${acc} 3px, transparent 0)`;
-                g.style.backgroundSize = '50px 50px';
-                g.style.opacity = 'var(--op)';
+                g.style.backgroundImage = `radial-gradient(${acc} 2px, transparent 0)`;
+                g.style.backgroundSize = '50px 50px'; g.style.opacity = 'var(--op)';
                 canvas.appendChild(g);
-                tl.fromTo(g, { opacity: 0.05 }, { opacity: 0.3, duration: dur/2, yoyo: true, repeat: 1 }, 0);
                 tl.to(g, { backgroundPosition: "50px 50px", duration: dur, ease: "none" }, 0);
             },
-
-            // 15. ماسح الليزر (Scanning Laser Grid)
+            // 15. Scan (Fixed calling grid_perspective)
             grid_scan: (dur, acc) => {
-                this.grid_perspective(dur, acc); // نستخدم الجريد الأساسي
+                effects.grid_perspective(dur, acc);
                 const line = document.createElement('div');
-                line.style.width = '100%'; line.style.height = '5px';
+                line.style.width = '100%'; line.style.height = '4px';
                 line.style.background = `linear-gradient(90deg, transparent, ${acc}, transparent)`;
                 line.style.position = 'absolute'; line.style.top = '0';
                 canvas.appendChild(line);
-                tl.to(line, { top: '100%', duration: dur, ease: "none" }, 0);
+                tl.fromTo(line, { top: '0%' }, { top: '100%', duration: dur, ease: "none" }, 0);
             },
-
-            // 16. الارتفاعات الطبوغرافية (Topographic Lines)
+            // 16. Topo
             grid_topo: (dur, acc) => {
                 canvas.innerHTML = `<svg viewBox="0 0 1000 1000" preserveAspectRatio="none">
-                    <g id="topo-group" opacity="var(--op)" fill="none" stroke="${acc}" stroke-width="2"></g></svg>`;
-                const group = canvas.querySelector('#topo-group');
+                    <g id="tg" opacity="var(--op)" fill="none" stroke="${acc}" stroke-width="2"></g></svg>`;
+                const g = canvas.querySelector('#tg');
                 for(let i=0; i<15; i++) {
                     const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    const d = `M -100 ${i*100} Q 250 ${i*100-80} 500 ${i*100} T 1100 ${i*100}`;
-                    p.setAttribute("d", d);
-                    group.appendChild(p);
+                    p.setAttribute("d", `M -100 ${i*100} Q 250 ${i*100-50} 500 ${i*100} T 1100 ${i*100}`);
+                    g.appendChild(p);
                 }
-                tl.to(group, { y: 100, duration: dur, ease: "none" }, 0);
+                tl.to(g, { y: 100, duration: dur, ease: "none" }, 0);
             },
-
-            // 17. شاشة الرادار (Radar Sonar)
+            // 17. Radar
             grid_radar: (dur, acc) => {
-                const group = document.createElement('div');
-                group.className = 'layer';
-                canvas.appendChild(group);
+                const rContainer = document.createElement('div');
+                rContainer.className = 'layer'; canvas.appendChild(rContainer);
                 for(let i=1; i<=6; i++) {
                     const r = document.createElement('div');
-                    r.className = 'shape'; r.style.background='none';
-                    r.style.border = `1px solid ${acc}`; r.style.borderRadius = '50%';
-                    r.style.width = r.style.height = (i*300) + 'px';
-                    r.style.left = '50%'; r.style.top = '50%';
-                    r.style.transform = 'translate(-50%, -50%)';
-                    group.appendChild(r);
+                    r.className = 'shape'; r.style.background='none'; r.style.border=`1px solid ${acc}`;
+                    r.style.width = r.style.height = (i*300)+'px'; r.style.borderRadius='50%';
+                    r.style.left='50%'; r.style.top='50%'; r.style.transform='translate(-50%, -50%)';
+                    rContainer.appendChild(r);
                 }
                 const sweep = document.createElement('div');
-                sweep.style.width = '1000px'; sweep.style.height = '1000px';
-                sweep.style.background = `conic-gradient(from 0deg, ${acc}44, transparent 90deg)`;
+                sweep.style.width='1000px'; sweep.style.height='1000px';
+                sweep.style.background=`conic-gradient(from 0deg, ${acc}44, transparent 90deg)`;
                 sweep.style.position='absolute'; sweep.style.left='50%'; sweep.style.top='50%';
-                sweep.style.transformOrigin = 'top left';
-                canvas.appendChild(sweep);
+                sweep.style.transformOrigin='top left'; canvas.appendChild(sweep);
                 tl.to(sweep, { rotation: 360, duration: dur, ease: "none" }, 0);
             },
-
-            // 18. التداخل المزدوج (Double Flux Grid)
+            // 18. Double Flux
             grid_double: (dur, acc) => {
                 const g1 = document.createElement('div');
-                g1.style.width = g1.style.height = '200%';
+                g1.style.width = g1.style.height = '200%'; g1.style.position = 'absolute';
                 g1.style.backgroundImage = `repeating-linear-gradient(45deg, ${acc} 1px, transparent 1px, transparent 40px)`;
-                g1.style.position = 'absolute'; g1.style.opacity = 'var(--op)';
+                g1.style.opacity = 'var(--op)';
                 const g2 = g1.cloneNode();
                 g2.style.backgroundImage = `repeating-linear-gradient(-45deg, ${acc} 1px, transparent 1px, transparent 40px)`;
                 canvas.appendChild(g1); canvas.appendChild(g2);
                 tl.to(g1, { x: 40, duration: dur, ease: "none" }, 0);
                 tl.to(g2, { x: -40, duration: dur, ease: "none" }, 0);
             },
-
-            // 19. مصفوفة التقاطع (Cross Matrix)
+            // 19. Cross Matrix
             grid_cross: (dur, acc) => {
                 const gap = 100;
                 for(let x=0; x<=1920; x+=gap) {
                     for(let y=0; y<=1080; y+=gap) {
                         const c = document.createElement('div');
-                        c.innerHTML = '＋'; c.className = 'shape';
-                        c.style.background='none'; c.style.color=acc; c.style.fontSize='20px';
-                        c.style.left = x+'px'; c.style.top = y+'px';
+                        c.innerHTML = '＋'; c.className = 'shape'; c.style.background='none';
+                        c.style.color=acc; c.style.fontSize='20px'; c.style.left = x+'px'; c.style.top = y+'px';
                         canvas.appendChild(c);
-                        tl.fromTo(c, { rotation: 0, scale: 0.5 }, { rotation: 180, scale: 1.2, duration: dur/2, yoyo: true, repeat: 1, ease: "back.inOut" }, (x+y)*0.0005);
+                        tl.fromTo(c, { rotation: 0 }, { rotation: 180, duration: dur/2, yoyo: true, repeat: 1 }, (x+y)*0.0005);
                     }
                 }
                 tl.to(canvas.childNodes, { x: gap, duration: dur, ease: "none" }, 0);
             },
-
-            // 20. حقل الطاقة (Energy Field Nodes)
+            // 20. Energy Field
             grid_energy: (dur, acc) => {
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 canvas.appendChild(svg);
-                for(let i=0; i<30; i++) {
-                    const x1 = Math.random()*1920, y1 = Math.random()*1080;
-                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    circle.setAttribute("cx", x1); circle.setAttribute("cy", y1);
-                    circle.setAttribute("r", "4"); circle.setAttribute("fill", acc);
-                    circle.setAttribute("opacity", "var(--op)");
-                    svg.appendChild(circle);
-                    tl.to(circle, { 
-                        cx: "+=100", cy: "+=50", duration: dur, ease: "none"
-                    }, 0);
-                    tl.fromTo(circle, { opacity: 0.1 }, { opacity: 1, duration: dur/2, yoyo: true, repeat: 1 }, Math.random()*dur);
+                for(let i=0; i<40; i++) {
+                    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    const x = Math.random()*1920, y = Math.random()*1080;
+                    c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", "3");
+                    c.setAttribute("fill", acc); c.setAttribute("opacity", "var(--op)");
+                    svg.appendChild(c);
+                    tl.to(c, { cx: "+=100", cy: "+=50", duration: dur, ease: "none" }, 0);
                 }
             }
         };
